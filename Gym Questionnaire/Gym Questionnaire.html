@@ -1,0 +1,1716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apex Form — Website Questionnaire</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Cormorant Garamond + DM Sans (matches index.html) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- GSAP CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Cormorant Garamond', 'serif'],
+            body:    ['DM Sans', 'sans-serif'],
+          },
+          colors: {
+            cream:  '#FAFAF8',
+            ivory:  '#F4F1EB',
+            gold:   '#C8A96E',
+            'gold-light': '#E8D9B8',
+            stone:  '#6B6860',
+            ink:    '#0F0F0E',
+            border: '#E2DDD5',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* ── CSS Custom Properties (identical to index.html) ─────────── */
+    :root {
+      --bg:     #FAFAF8;
+      --ink:    #0F0F0E;
+      --gold:   #C8A96E;
+      --stone:  #6B6860;
+      --border: #E2DDD5;
+      --ivory:  #F4F1EB;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+
+    /* Grain overlay */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.4;
+    }
+
+    /* Frosted nav */
+    nav {
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    /* Display font */
+    .display { font-family: 'Cormorant Garamond', serif; font-weight: 300; line-height: 1.05; }
+    .display em { font-style: italic; }
+
+    /* Gold rule */
+    .accent-line { width: 40px; height: 1px; background: var(--gold); flex-shrink: 0; }
+
+    /* Section eyebrow */
+    .section-label {
+      font-size: 0.6875rem; letter-spacing: 0.15em;
+      text-transform: uppercase; color: var(--stone); font-weight: 500;
+    }
+
+    /* ── Form inputs ─────────────────────────────────────────────── */
+    .q-input, .q-textarea, .q-select {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: white;
+      padding: 0.75rem 1rem;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9375rem;
+      color: var(--ink);
+      border-radius: 2px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .q-input:focus, .q-textarea:focus, .q-select:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(200,169,110,0.12);
+    }
+    .q-input::placeholder, .q-textarea::placeholder { color: #C0BBB4; }
+    .q-textarea { resize: vertical; min-height: 90px; line-height: 1.6; }
+
+    /* Custom select arrow */
+    .q-select {
+      -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B6860' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 2.5rem;
+    }
+
+    /* Field label */
+    .q-label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+      margin-bottom: 0.5rem;
+    }
+    .q-hint {
+      font-size: 0.75rem;
+      color: var(--stone);
+      margin-top: 0.35rem;
+      line-height: 1.5;
+    }
+
+    /* Required asterisk */
+    .req { color: var(--gold); margin-left: 2px; }
+
+    /* ── Step nav dots ───────────────────────────────────────────── */
+    .step-dot {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 500;
+      color: var(--stone);
+      transition: all 0.25s ease;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .step-dot.active  { background: var(--ink); border-color: var(--ink); color: white; }
+    .step-dot.done    { background: var(--gold); border-color: var(--gold); color: white; }
+    .step-connector   { flex: 1; height: 1px; background: var(--border); min-width: 12px; }
+
+    /* ── Progress bar ───────────────────────────────────────────── */
+    #progress-bar {
+      height: 2px;
+      background: var(--gold);
+      transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ── Step panels ────────────────────────────────────────────── */
+    .step-panel { display: none; }
+    .step-panel.active { display: block; }
+
+    /* ── Buttons ─────────────────────────────────────────────────── */
+    .btn-primary {
+      background: var(--ink); color: white;
+      padding: 0.875rem 2rem;
+      font-family: 'DM Sans', sans-serif; font-size: 0.8125rem;
+      font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+      border-radius: 2px; border: none; cursor: pointer;
+      transition: background 0.2s ease, transform 0.15s ease;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover { background: #2A2A28; transform: translateY(-1px); }
+
+    .btn-outline {
+      background: transparent; color: var(--ink);
+      padding: 0.875rem 1.75rem;
+      font-family: 'DM Sans', sans-serif; font-size: 0.8125rem;
+      font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+      border-radius: 2px; border: 1px solid var(--border); cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-outline:hover { border-color: var(--ink); background: var(--ivory); }
+
+    .btn-gold {
+      background: var(--gold); color: var(--ink);
+      padding: 0.875rem 2rem;
+      font-family: 'DM Sans', sans-serif; font-size: 0.8125rem;
+      font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+      border-radius: 2px; border: none; cursor: pointer;
+      transition: background 0.2s ease, transform 0.15s ease;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-gold:hover { background: #B8975E; transform: translateY(-1px); }
+
+    /* ── Section card ───────────────────────────────────────────── */
+    .q-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .q-card-dark {
+      background: var(--ink);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 2px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Sub-section divider */
+    .q-divider { height: 1px; background: var(--border); margin: 2rem 0; }
+
+    /* Card heading */
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.375rem; font-weight: 500;
+      color: var(--ink); margin-bottom: 0.35rem;
+    }
+    .card-sub { font-size: 0.8125rem; color: var(--stone); margin-bottom: 1.5rem; }
+
+    /* Bullet row */
+    .bullet-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.625rem; }
+    .bullet-icon { color: var(--gold); font-size: 0.5rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Export panel ───────────────────────────────────────────── */
+    #export-panel {
+      background: var(--ink); color: white;
+      border-radius: 2px; padding: 2rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem; line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 480px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    /* Copy feedback */
+    #copy-feedback {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      font-size: 0.75rem;
+      color: var(--gold);
+    }
+
+    /* Completion check */
+    .check-circle {
+      width: 72px; height: 72px;
+      background: rgba(200,169,110,0.12);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.5rem;
+    }
+
+    /* Validation shake */
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-6px); }
+      40%      { transform: translateX(6px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(4px); }
+    }
+    .shake { animation: shake 0.35s ease; }
+    .field-error { border-color: #E07070 !important; }
+    .error-msg { font-size: 0.75rem; color: #C05050; margin-top: 0.35rem; display: none; }
+    .error-msg.visible { display: block; }
+
+    /* Scrollbar styling */
+    #export-panel::-webkit-scrollbar { width: 4px; }
+    #export-panel::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+    #export-panel::-webkit-scrollbar-thumb { background: rgba(200,169,110,0.4); border-radius: 2px; }
+  </style>
+</head>
+<body class="bg-cream">
+
+  <!-- ============================================================
+       NAV BAR (matches index.html nav exactly)
+  ============================================================ -->
+  <nav class="fixed top-0 left-0 right-0 z-50 bg-cream/90 border-b border-border">
+    <div class="max-w-5xl mx-auto px-6">
+      <div class="flex items-center justify-between h-16">
+        <!-- Wordmark -->
+        <a href="#" class="flex items-center gap-2.5">
+          <div class="w-7 h-7 bg-ink rounded-sm flex items-center justify-center">
+            <span style="font-family:'Cormorant Garamond',serif;color:white;font-size:1rem;font-weight:600;line-height:1;">A</span>
+          </div>
+          <span style="font-family:'DM Sans',sans-serif;font-size:0.9375rem;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;">Apex Form</span>
+        </a>
+        <!-- Context label -->
+        <div class="flex items-center gap-3">
+          <div class="accent-line"></div>
+          <span class="section-label">Website Questionnaire</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Progress bar (top) -->
+  <div class="fixed top-16 left-0 right-0 z-40" style="background:var(--border);height:2px;">
+    <div id="progress-bar" style="width:16.67%;"></div>
+  </div>
+
+
+  <!-- ============================================================
+       MAIN LAYOUT
+  ============================================================ -->
+  <main class="max-w-5xl mx-auto px-6 pt-28 pb-24">
+
+    <!-- ── Page header ──────────────────────────────────────────── -->
+    <div id="page-header" class="mb-14" style="opacity:0;transform:translateY(24px);">
+      <div class="flex items-center gap-3 mb-5">
+        <div class="accent-line"></div>
+        <span class="section-label">Client Intake</span>
+      </div>
+      <h1 class="display text-5xl lg:text-6xl text-ink mb-5">
+        Tell Us About<br><em>Your</em> <span style="color:var(--gold)">Gym.</span>
+      </h1>
+      <p class="text-stone font-light leading-relaxed max-w-2xl">
+        Complete this 6-step questionnaire and we'll have everything needed to build
+        your custom landing page. All fields marked <span class="text-gold font-medium">✦</span> are required.
+        Takes approximately <strong class="text-ink font-medium">8–12 minutes</strong>.
+      </p>
+    </div>
+
+    <!-- ── Step progress strip ──────────────────────────────────── -->
+    <div id="step-nav" class="flex items-center gap-0 mb-12 overflow-x-auto pb-2" style="opacity:0;">
+      <!-- Steps populated by JS -->
+    </div>
+
+    <!-- ============================================================
+         STEP 1 — BRAND IDENTITY
+    ============================================================ -->
+    <div id="step-1" class="step-panel active" style="opacity:0;">
+
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="accent-line"></div>
+          <span class="section-label">Step 1 of 6</span>
+        </div>
+        <h2 class="display text-4xl text-ink">Brand Identity</h2>
+      </div>
+
+      <div class="q-card">
+        <div class="card-title">Business Basics</div>
+        <div class="card-sub">This defines the wordmark, tagline, and page title.</div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- Business name -->
+          <div>
+            <label class="q-label" for="biz-name">Business Name <span class="req">✦</span></label>
+            <input type="text" id="biz-name" class="q-input" placeholder="e.g. Iron Peak Fitness" maxlength="60">
+            <div class="error-msg" id="err-biz-name">Please enter your business name.</div>
+          </div>
+          <!-- Short tagline descriptor -->
+          <div>
+            <label class="q-label" for="biz-descriptor">One-Line Descriptor <span class="req">✦</span></label>
+            <input type="text" id="biz-descriptor" class="q-input" placeholder="e.g. Premium Fitness Studio" maxlength="60">
+            <p class="q-hint">Appears under the logo and as the hero section eyebrow label.</p>
+          </div>
+          <!-- Founded year -->
+          <div>
+            <label class="q-label" for="biz-year">Year Established <span class="req">✦</span></label>
+            <input type="number" id="biz-year" class="q-input" placeholder="e.g. 2019" min="1900" max="2030">
+            <p class="q-hint">Used in the "Est. XXXX" badge on the hero image card.</p>
+          </div>
+          <!-- Primary city/location -->
+          <div>
+            <label class="q-label" for="biz-location">City / Location</label>
+            <input type="text" id="biz-location" class="q-input" placeholder="e.g. Austin, TX">
+          </div>
+        </div>
+
+        <div class="q-divider"></div>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <!-- Primary accent color preference -->
+          <div>
+            <label class="q-label" for="biz-accent">Brand Accent Color</label>
+            <div class="flex items-center gap-3">
+              <input type="color" id="biz-accent-picker" value="#C8A96E"
+                style="width:44px;height:44px;border:1px solid var(--border);border-radius:2px;cursor:pointer;padding:2px;background:white;">
+              <input type="text" id="biz-accent" class="q-input" placeholder="#C8A96E" value="#C8A96E" maxlength="7" style="flex:1;">
+            </div>
+            <p class="q-hint">The highlight color used for headings, borders, and CTA elements.</p>
+          </div>
+          <!-- Logo wordmark initial -->
+          <div>
+            <label class="q-label" for="biz-initial">Wordmark Initial</label>
+            <input type="text" id="biz-initial" class="q-input" placeholder="e.g. I" maxlength="2">
+            <p class="q-hint">Single letter displayed in the nav square logo icon.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="flex justify-end mt-8">
+        <button class="btn-primary" onclick="goNext(1)">
+          Next: Hero Content
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2.5 7h9M8 3.5L11.5 7 8 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ============================================================
+         STEP 2 — HERO SECTION
+    ============================================================ -->
+    <div id="step-2" class="step-panel" style="opacity:0;">
+
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="accent-line"></div>
+          <span class="section-label">Step 2 of 6</span>
+        </div>
+        <h2 class="display text-4xl text-ink">Hero Section</h2>
+        <p class="text-stone text-sm font-light mt-2">The first thing visitors see. Be bold — this drives conversions.</p>
+      </div>
+
+      <!-- Headline -->
+      <div class="q-card">
+        <div class="card-title">Main Headline</div>
+        <div class="card-sub">
+          The hero uses a 3-line structure:
+          <strong class="text-ink">Line 1</strong> (plain),
+          <em class="text-stone">Line 2</em> (italic accent),
+          <span style="color:var(--gold);">Line 3</span> (gold highlight word).
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4 mb-6">
+          <div>
+            <label class="q-label" for="hero-line1">Line 1 <span class="req">✦</span></label>
+            <input type="text" id="hero-line1" class="q-input" placeholder="e.g. Your Body." maxlength="40">
+            <div class="error-msg" id="err-hero-line1">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" for="hero-line2">Line 2 — italic <span class="req">✦</span></label>
+            <input type="text" id="hero-line2" class="q-input" placeholder="e.g. Your Strength." maxlength="40">
+            <div class="error-msg" id="err-hero-line2">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" for="hero-line3">Line 3 — gold word <span class="req">✦</span></label>
+            <input type="text" id="hero-line3" class="q-input" placeholder="e.g. Unleashed." maxlength="30">
+            <div class="error-msg" id="err-hero-line3">Required.</div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-6">
+          <label class="q-label" for="hero-desc">Hero Description Paragraph <span class="req">✦</span></label>
+          <textarea id="hero-desc" class="q-textarea" placeholder="1–2 sentences describing your gym's unique value proposition. This appears below the headline." maxlength="220"></textarea>
+          <div class="error-msg" id="err-hero-desc">Required.</div>
+          <p class="q-hint">Keep it under 220 characters. Focus on what makes you different.</p>
+        </div>
+
+        <!-- CTAs -->
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="q-label" for="hero-cta-primary">Primary CTA Button <span class="req">✦</span></label>
+            <input type="text" id="hero-cta-primary" class="q-input" placeholder="e.g. Begin Your Journey" maxlength="30">
+            <div class="error-msg" id="err-hero-cta-primary">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" for="hero-cta-secondary">Secondary CTA Button</label>
+            <input type="text" id="hero-cta-secondary" class="q-input" placeholder="e.g. Calculate Calories" maxlength="30">
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="q-card">
+        <div class="card-title">Social Proof Stats</div>
+        <div class="card-sub">Three numbers displayed beneath the hero CTA buttons (e.g. "2,400+ Active Members").</div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <!-- Stat 1 -->
+          <div>
+            <label class="q-label" for="stat1-value">Stat 1 — Value <span class="req">✦</span></label>
+            <input type="text" id="stat1-value" class="q-input" placeholder="e.g. 1,200+" maxlength="20">
+            <div class="error-msg" id="err-stat1-value">Required.</div>
+            <div class="mt-3">
+              <label class="q-label" for="stat1-label">Stat 1 — Label <span class="req">✦</span></label>
+              <input type="text" id="stat1-label" class="q-input" placeholder="e.g. Active Members" maxlength="30">
+              <div class="error-msg" id="err-stat1-label">Required.</div>
+            </div>
+          </div>
+          <!-- Stat 2 -->
+          <div>
+            <label class="q-label" for="stat2-value">Stat 2 — Value <span class="req">✦</span></label>
+            <input type="text" id="stat2-value" class="q-input" placeholder="e.g. 95%" maxlength="20">
+            <div class="error-msg" id="err-stat2-value">Required.</div>
+            <div class="mt-3">
+              <label class="q-label" for="stat2-label">Stat 2 — Label <span class="req">✦</span></label>
+              <input type="text" id="stat2-label" class="q-input" placeholder="e.g. Satisfaction Rate" maxlength="30">
+              <div class="error-msg" id="err-stat2-label">Required.</div>
+            </div>
+          </div>
+          <!-- Stat 3 -->
+          <div>
+            <label class="q-label" for="stat3-value">Stat 3 — Value <span class="req">✦</span></label>
+            <input type="text" id="stat3-value" class="q-input" placeholder="e.g. 8" maxlength="20">
+            <div class="error-msg" id="err-stat3-value">Required.</div>
+            <div class="mt-3">
+              <label class="q-label" for="stat3-label">Stat 3 — Label <span class="req">✦</span></label>
+              <input type="text" id="stat3-label" class="q-input" placeholder="e.g. Expert Coaches" maxlength="30">
+              <div class="error-msg" id="err-stat3-label">Required.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="flex justify-between mt-8">
+        <button class="btn-outline" onclick="goPrev(2)">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M11.5 7h-9M6 3.5L2.5 7 6 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Back
+        </button>
+        <button class="btn-primary" onclick="goNext(2)">
+          Next: Programs
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2.5 7h9M8 3.5L11.5 7 8 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ============================================================
+         STEP 3 — PROGRAMS / SERVICES
+    ============================================================ -->
+    <div id="step-3" class="step-panel" style="opacity:0;">
+
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="accent-line"></div>
+          <span class="section-label">Step 3 of 6</span>
+        </div>
+        <h2 class="display text-4xl text-ink">Programs & Services</h2>
+        <p class="text-stone text-sm font-light mt-2">Three feature cards in the Programs grid. The middle card renders dark — make it your most popular service.</p>
+      </div>
+
+      <!-- Program 1 -->
+      <div class="q-card">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-8 h-8 rounded-sm bg-ivory flex items-center justify-center flex-shrink-0"
+               style="font-family:'Cormorant Garamond',serif;font-size:1.125rem;font-weight:300;color:var(--border);">01</div>
+          <div>
+            <div class="card-title" style="margin-bottom:0;">Program One</div>
+            <div style="font-size:0.75rem;color:var(--stone);">White card · left column</div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-5 mb-5">
+          <div>
+            <label class="q-label" for="p1-name">Service Name <span class="req">✦</span></label>
+            <input type="text" id="p1-name" class="q-input" placeholder="e.g. Personal Training" maxlength="40">
+            <div class="error-msg" id="err-p1-name">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" for="p1-img">Hero Image Filename</label>
+            <input type="text" id="p1-img" class="q-input" placeholder="e.g. feature_pt.jpg">
+            <p class="q-hint">File must be in the same folder as index.html.</p>
+          </div>
+        </div>
+        <div class="mb-5">
+          <label class="q-label" for="p1-desc">Short Description <span class="req">✦</span></label>
+          <textarea id="p1-desc" class="q-textarea" placeholder="2–3 sentences about this service." maxlength="200"></textarea>
+          <div class="error-msg" id="err-p1-desc">Required.</div>
+        </div>
+        <div>
+          <label class="q-label">Three Key Bullet Points <span class="req">✦</span></label>
+          <div class="space-y-2">
+            <div class="bullet-row">
+              <span class="bullet-icon">✦</span>
+              <input type="text" id="p1-b1" class="q-input" placeholder="e.g. Weekly progress assessments" maxlength="60">
+            </div>
+            <div class="bullet-row">
+              <span class="bullet-icon">✦</span>
+              <input type="text" id="p1-b2" class="q-input" placeholder="e.g. Customized workout plans" maxlength="60">
+            </div>
+            <div class="bullet-row">
+              <span class="bullet-icon">✦</span>
+              <input type="text" id="p1-b3" class="q-input" placeholder="e.g. 24/7 coach messaging access" maxlength="60">
+            </div>
+          </div>
+          <div class="error-msg" id="err-p1-bullets">Please fill in all three bullet points.</div>
+        </div>
+      </div>
+
+      <!-- Program 2 (dark / most popular) -->
+      <div class="q-card-dark">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-8 h-8 rounded-sm flex items-center justify-center flex-shrink-0"
+               style="font-family:'Cormorant Garamond',serif;font-size:1.125rem;font-weight:300;color:rgba(255,255,255,0.15);">02</div>
+          <div>
+            <div class="card-title" style="color:white;margin-bottom:0;">Program Two</div>
+            <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);">Dark card · center column · "Most Popular" badge</div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-5 mb-5">
+          <div>
+            <label class="q-label" style="color:rgba(255,255,255,0.7);" for="p2-name">Service Name <span class="req">✦</span></label>
+            <input type="text" id="p2-name" class="q-input" placeholder="e.g. Group Classes" maxlength="40">
+            <div class="error-msg" id="err-p2-name">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" style="color:rgba(255,255,255,0.7);" for="p2-img">Hero Image Filename</label>
+            <input type="text" id="p2-img" class="q-input" placeholder="e.g. feature_group.jpg">
+          </div>
+        </div>
+        <div class="mb-5">
+          <label class="q-label" style="color:rgba(255,255,255,0.7);" for="p2-desc">Short Description <span class="req">✦</span></label>
+          <textarea id="p2-desc" class="q-textarea" placeholder="2–3 sentences about this service." maxlength="200"></textarea>
+          <div class="error-msg" id="err-p2-desc">Required.</div>
+        </div>
+        <div>
+          <label class="q-label" style="color:rgba(255,255,255,0.7);">Three Key Bullet Points <span class="req">✦</span></label>
+          <div class="space-y-2">
+            <div class="bullet-row">
+              <span class="bullet-icon">✦</span>
+              <input type="text" id="p2-b1" class="q-input" placeholder="e.g. 40+ weekly class options" maxlength="60">
+            </div>
+            <div class="bullet-row">
+              <span class="bullet-icon">✦</span>
+              <input type="text" id="p2-b2" class="q-input" placeholder="e.g. Expert-led instruction" maxlength="60">
+            </div>
+            <div class="bullet-row">
+              <span class="bullet-icon">✦</span>
+              <input type="text" id="p2-b3" class="q-input" placeholder="e.g. Community accountability" maxlength="60">
+            </div>
+          </div>
+          <div class="error-msg" id="err-p2-bullets">Please fill in all three bullet points.</div>
+        </div>
+      </div>
+
+      <!-- Program 3 -->
+      <div class="q-card">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-8 h-8 rounded-sm bg-ivory flex items-center justify-center flex-shrink-0"
+               style="font-family:'Cormorant Garamond',serif;font-size:1.125rem;font-weight:300;color:var(--border);">03</div>
+          <div>
+            <div class="card-title" style="margin-bottom:0;">Program Three</div>
+            <div style="font-size:0.75rem;color:var(--stone);">White card · right column</div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-5 mb-5">
+          <div>
+            <label class="q-label" for="p3-name">Service Name <span class="req">✦</span></label>
+            <input type="text" id="p3-name" class="q-input" placeholder="e.g. Nutrition Coaching" maxlength="40">
+            <div class="error-msg" id="err-p3-name">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" for="p3-img">Hero Image Filename</label>
+            <input type="text" id="p3-img" class="q-input" placeholder="e.g. feature_nutrition.jpg">
+          </div>
+        </div>
+        <div class="mb-5">
+          <label class="q-label" for="p3-desc">Short Description <span class="req">✦</span></label>
+          <textarea id="p3-desc" class="q-textarea" placeholder="2–3 sentences about this service." maxlength="200"></textarea>
+          <div class="error-msg" id="err-p3-desc">Required.</div>
+        </div>
+        <div>
+          <label class="q-label">Three Key Bullet Points <span class="req">✦</span></label>
+          <div class="space-y-2">
+            <div class="bullet-row">
+              <span class="bullet-icon">✦</span>
+              <input type="text" id="p3-b1" class="q-input" placeholder="e.g. Macro & calorie tracking" maxlength="60">
+            </div>
+            <div class="bullet-row">
+              <span class="bullet-icon">✦</span>
+              <input type="text" id="p3-b2" class="q-input" placeholder="e.g. Personalized meal plans" maxlength="60">
+            </div>
+            <div class="bullet-row">
+              <span class="bullet-icon">✦</span>
+              <input type="text" id="p3-b3" class="q-input" placeholder="e.g. Registered dietitian support" maxlength="60">
+            </div>
+          </div>
+          <div class="error-msg" id="err-p3-bullets">Please fill in all three bullet points.</div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="flex justify-between mt-8">
+        <button class="btn-outline" onclick="goPrev(3)">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M11.5 7h-9M6 3.5L2.5 7 6 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Back
+        </button>
+        <button class="btn-primary" onclick="goNext(3)">
+          Next: Testimonials
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2.5 7h9M8 3.5L11.5 7 8 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ============================================================
+         STEP 4 — TESTIMONIALS
+    ============================================================ -->
+    <div id="step-4" class="step-panel" style="opacity:0;">
+
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="accent-line"></div>
+          <span class="section-label">Step 4 of 6</span>
+        </div>
+        <h2 class="display text-4xl text-ink">Member Testimonials</h2>
+        <p class="text-stone text-sm font-light mt-2">Real quotes from real members. Include a measurable result where possible — it dramatically increases trust.</p>
+      </div>
+
+      <!-- Overall rating -->
+      <div class="q-card">
+        <div class="card-title">Overall Rating</div>
+        <div class="card-sub">Displayed prominently at the top of the testimonials section.</div>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div>
+            <label class="q-label" for="rating-score">Average Rating (out of 5) <span class="req">✦</span></label>
+            <input type="number" id="rating-score" class="q-input" placeholder="e.g. 4.9" min="1" max="5" step="0.1">
+            <div class="error-msg" id="err-rating-score">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" for="rating-count">Total Review Count <span class="req">✦</span></label>
+            <input type="number" id="rating-count" class="q-input" placeholder="e.g. 312" min="1">
+            <div class="error-msg" id="err-rating-count">Required.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Testimonial 1 -->
+      <div class="q-card">
+        <div class="card-title">Testimonial 1</div>
+        <div class="card-sub">White card — left column.</div>
+        <div class="mb-4">
+          <label class="q-label" for="t1-quote">Quote <span class="req">✦</span></label>
+          <textarea id="t1-quote" class="q-textarea" placeholder="The member's exact words — keep it 1–3 sentences." maxlength="240"></textarea>
+          <div class="error-msg" id="err-t1-quote">Required.</div>
+        </div>
+        <div class="grid md:grid-cols-3 gap-4">
+          <div>
+            <label class="q-label" for="t1-name">Member Name <span class="req">✦</span></label>
+            <input type="text" id="t1-name" class="q-input" placeholder="e.g. Sarah M." maxlength="40">
+            <div class="error-msg" id="err-t1-name">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" for="t1-since">Member Since</label>
+            <input type="text" id="t1-since" class="q-input" placeholder="e.g. 2023" maxlength="20">
+          </div>
+          <div>
+            <label class="q-label" for="t1-result">Key Result</label>
+            <input type="text" id="t1-result" class="q-input" placeholder="e.g. Lost 24 lbs" maxlength="40">
+          </div>
+        </div>
+      </div>
+
+      <!-- Testimonial 2 (featured ivory) -->
+      <div class="q-card" style="background:var(--ivory);">
+        <div class="card-title">Testimonial 2 <span style="font-size:0.75rem;color:var(--stone);font-weight:400;font-style:italic;">— Featured (ivory background)</span></div>
+        <div class="card-sub">Center column — displayed with decorative quote marks.</div>
+        <div class="mb-4">
+          <label class="q-label" for="t2-quote">Quote <span class="req">✦</span></label>
+          <textarea id="t2-quote" class="q-textarea" placeholder="Make this your most compelling quote — it gets the most visual weight." maxlength="240"></textarea>
+          <div class="error-msg" id="err-t2-quote">Required.</div>
+        </div>
+        <div class="grid md:grid-cols-3 gap-4">
+          <div>
+            <label class="q-label" for="t2-name">Member Name <span class="req">✦</span></label>
+            <input type="text" id="t2-name" class="q-input" placeholder="e.g. James T." maxlength="40">
+            <div class="error-msg" id="err-t2-name">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" for="t2-since">Member Since</label>
+            <input type="text" id="t2-since" class="q-input" placeholder="e.g. 2024" maxlength="20">
+          </div>
+          <div>
+            <label class="q-label" for="t2-result">Key Result</label>
+            <input type="text" id="t2-result" class="q-input" placeholder="e.g. Gained 12 lbs muscle" maxlength="40">
+          </div>
+        </div>
+      </div>
+
+      <!-- Testimonial 3 -->
+      <div class="q-card">
+        <div class="card-title">Testimonial 3</div>
+        <div class="card-sub">White card — right column.</div>
+        <div class="mb-4">
+          <label class="q-label" for="t3-quote">Quote <span class="req">✦</span></label>
+          <textarea id="t3-quote" class="q-textarea" placeholder="Another strong member story." maxlength="240"></textarea>
+          <div class="error-msg" id="err-t3-quote">Required.</div>
+        </div>
+        <div class="grid md:grid-cols-3 gap-4">
+          <div>
+            <label class="q-label" for="t3-name">Member Name <span class="req">✦</span></label>
+            <input type="text" id="t3-name" class="q-input" placeholder="e.g. Aisha K." maxlength="40">
+            <div class="error-msg" id="err-t3-name">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" for="t3-since">Member Since</label>
+            <input type="text" id="t3-since" class="q-input" placeholder="e.g. 2023" maxlength="20">
+          </div>
+          <div>
+            <label class="q-label" for="t3-result">Key Result</label>
+            <input type="text" id="t3-result" class="q-input" placeholder="e.g. Marathon finisher" maxlength="40">
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="flex justify-between mt-8">
+        <button class="btn-outline" onclick="goPrev(4)">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M11.5 7h-9M6 3.5L2.5 7 6 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Back
+        </button>
+        <button class="btn-primary" onclick="goNext(4)">
+          Next: Pricing
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2.5 7h9M8 3.5L11.5 7 8 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ============================================================
+         STEP 5 — PRICING
+    ============================================================ -->
+    <div id="step-5" class="step-panel" style="opacity:0;">
+
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="accent-line"></div>
+          <span class="section-label">Step 5 of 6</span>
+        </div>
+        <h2 class="display text-4xl text-ink">Membership Pricing</h2>
+        <p class="text-stone text-sm font-light mt-2">Three tiers with a monthly/annual toggle. The center tier (Pro) renders dark and should be your most popular plan.</p>
+      </div>
+
+      <!-- Pricing intro copy -->
+      <div class="q-card">
+        <div class="card-title">Section Copy</div>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div>
+            <label class="q-label" for="price-tagline">Pricing Section Tagline</label>
+            <input type="text" id="price-tagline" class="q-input" placeholder="e.g. No hidden fees." maxlength="80">
+            <p class="q-hint">Short sentence beneath the section headline.</p>
+          </div>
+          <div>
+            <label class="q-label" for="annual-discount">Annual Discount %</label>
+            <input type="number" id="annual-discount" class="q-input" placeholder="e.g. 20" min="0" max="60">
+            <p class="q-hint">Shown in the toggle: "Save XX%". Leave blank to hide.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tier 1 (Starter) -->
+      <div class="q-card">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <div class="card-title">Tier 1 — Entry Plan</div>
+            <div class="card-sub" style="margin-bottom:0;">White card · left column</div>
+          </div>
+          <span class="section-label border border-border px-3 py-1.5 rounded-sm">Basic</span>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4 mb-5">
+          <div>
+            <label class="q-label" for="tier1-name">Plan Name <span class="req">✦</span></label>
+            <input type="text" id="tier1-name" class="q-input" placeholder="e.g. Starter" maxlength="20">
+            <div class="error-msg" id="err-tier1-name">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" for="tier1-monthly">Monthly Price ($) <span class="req">✦</span></label>
+            <input type="number" id="tier1-monthly" class="q-input" placeholder="e.g. 49" min="0">
+            <div class="error-msg" id="err-tier1-monthly">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" for="tier1-annual">Annual Price ($/mo) <span class="req">✦</span></label>
+            <input type="number" id="tier1-annual" class="q-input" placeholder="e.g. 39" min="0">
+            <div class="error-msg" id="err-tier1-annual">Required.</div>
+          </div>
+        </div>
+        <div>
+          <label class="q-label">Included Features (up to 5) <span class="req">✦</span></label>
+          <div class="space-y-2">
+            <div class="bullet-row"><span class="bullet-icon">✦</span><input type="text" id="t1f1" class="q-input" placeholder="e.g. Gym access (6am–10pm)" maxlength="60"></div>
+            <div class="bullet-row"><span class="bullet-icon">✦</span><input type="text" id="t1f2" class="q-input" placeholder="e.g. 5 group classes/month" maxlength="60"></div>
+            <div class="bullet-row"><span class="bullet-icon">✦</span><input type="text" id="t1f3" class="q-input" placeholder="e.g. Mobile app access" maxlength="60"></div>
+            <div class="bullet-row"><span class="bullet-icon" style="color:var(--border);">✗</span><input type="text" id="t1f4" class="q-input" placeholder="Not included — e.g. Personal training" maxlength="60"></div>
+            <div class="bullet-row"><span class="bullet-icon" style="color:var(--border);">✗</span><input type="text" id="t1f5" class="q-input" placeholder="Not included — e.g. Nutrition coaching" maxlength="60"></div>
+          </div>
+          <p class="q-hint">Lines prefixed ✗ render as greyed-out "not included" in the card.</p>
+        </div>
+      </div>
+
+      <!-- Tier 2 (Pro - dark) -->
+      <div class="q-card-dark">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <div class="card-title" style="color:white;">Tier 2 — Mid Plan</div>
+            <div style="font-size:0.75rem;color:rgba(255,255,255,0.4);margin-bottom:0;">Dark card · center column · "Best Value" badge</div>
+          </div>
+          <span class="section-label border border-gold/30 text-gold px-3 py-1.5 rounded-sm">Best Value</span>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4 mb-5">
+          <div>
+            <label class="q-label" style="color:rgba(255,255,255,0.7);" for="tier2-name">Plan Name <span class="req">✦</span></label>
+            <input type="text" id="tier2-name" class="q-input" placeholder="e.g. Pro" maxlength="20">
+            <div class="error-msg" id="err-tier2-name">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" style="color:rgba(255,255,255,0.7);" for="tier2-monthly">Monthly Price ($) <span class="req">✦</span></label>
+            <input type="number" id="tier2-monthly" class="q-input" placeholder="e.g. 129" min="0">
+            <div class="error-msg" id="err-tier2-monthly">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" style="color:rgba(255,255,255,0.7);" for="tier2-annual">Annual Price ($/mo) <span class="req">✦</span></label>
+            <input type="number" id="tier2-annual" class="q-input" placeholder="e.g. 103" min="0">
+            <div class="error-msg" id="err-tier2-annual">Required.</div>
+          </div>
+        </div>
+        <div>
+          <label class="q-label" style="color:rgba(255,255,255,0.7);">Included Features (up to 5) <span class="req">✦</span></label>
+          <div class="space-y-2">
+            <div class="bullet-row"><span class="bullet-icon">✦</span><input type="text" id="t2f1" class="q-input" placeholder="e.g. Unlimited gym access 24/7" maxlength="60"></div>
+            <div class="bullet-row"><span class="bullet-icon">✦</span><input type="text" id="t2f2" class="q-input" placeholder="e.g. Unlimited group classes" maxlength="60"></div>
+            <div class="bullet-row"><span class="bullet-icon">✦</span><input type="text" id="t2f3" class="q-input" placeholder="e.g. 4 PT sessions/month" maxlength="60"></div>
+            <div class="bullet-row"><span class="bullet-icon">✦</span><input type="text" id="t2f4" class="q-input" placeholder="e.g. Nutrition coaching included" maxlength="60"></div>
+            <div class="bullet-row"><span class="bullet-icon">✦</span><input type="text" id="t2f5" class="q-input" placeholder="e.g. Priority booking" maxlength="60"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tier 3 (Elite) -->
+      <div class="q-card">
+        <div class="flex items-start justify-between mb-4">
+          <div>
+            <div class="card-title">Tier 3 — Premium Plan</div>
+            <div class="card-sub" style="margin-bottom:0;">White card · right column</div>
+          </div>
+          <span class="section-label border border-border px-3 py-1.5 rounded-sm">Elite</span>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4 mb-5">
+          <div>
+            <label class="q-label" for="tier3-name">Plan Name <span class="req">✦</span></label>
+            <input type="text" id="tier3-name" class="q-input" placeholder="e.g. Elite" maxlength="20">
+            <div class="error-msg" id="err-tier3-name">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" for="tier3-monthly">Monthly Price ($) <span class="req">✦</span></label>
+            <input type="number" id="tier3-monthly" class="q-input" placeholder="e.g. 249" min="0">
+            <div class="error-msg" id="err-tier3-monthly">Required.</div>
+          </div>
+          <div>
+            <label class="q-label" for="tier3-annual">Annual Price ($/mo) <span class="req">✦</span></label>
+            <input type="number" id="tier3-annual" class="q-input" placeholder="e.g. 199" min="0">
+            <div class="error-msg" id="err-tier3-annual">Required.</div>
+          </div>
+        </div>
+        <div>
+          <label class="q-label">Included Features (up to 5) <span class="req">✦</span></label>
+          <div class="space-y-2">
+            <div class="bullet-row"><span class="bullet-icon">✦</span><input type="text" id="t3f1" class="q-input" placeholder="e.g. Everything in Pro" maxlength="60"></div>
+            <div class="bullet-row"><span class="bullet-icon">✦</span><input type="text" id="t3f2" class="q-input" placeholder="e.g. Unlimited PT sessions" maxlength="60"></div>
+            <div class="bullet-row"><span class="bullet-icon">✦</span><input type="text" id="t3f3" class="q-input" placeholder="e.g. Dedicated head coach" maxlength="60"></div>
+            <div class="bullet-row"><span class="bullet-icon">✦</span><input type="text" id="t3f4" class="q-input" placeholder="e.g. Full body composition testing" maxlength="60"></div>
+            <div class="bullet-row"><span class="bullet-icon">✦</span><input type="text" id="t3f5" class="q-input" placeholder="e.g. VIP lounge access" maxlength="60"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="flex justify-between mt-8">
+        <button class="btn-outline" onclick="goPrev(5)">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M11.5 7h-9M6 3.5L2.5 7 6 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Back
+        </button>
+        <button class="btn-primary" onclick="goNext(5)">
+          Next: Contact & Footer
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M2.5 7h9M8 3.5L11.5 7 8 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ============================================================
+         STEP 6 — CONTACT & FOOTER
+    ============================================================ -->
+    <div id="step-6" class="step-panel" style="opacity:0;">
+
+      <div class="mb-8">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="accent-line"></div>
+          <span class="section-label">Step 6 of 6</span>
+        </div>
+        <h2 class="display text-4xl text-ink">Contact & Footer</h2>
+        <p class="text-stone text-sm font-light mt-2">Social links, newsletter copy, and the footer navigation columns.</p>
+      </div>
+
+      <!-- Contact details -->
+      <div class="q-card">
+        <div class="card-title">Contact Information</div>
+        <div class="card-sub">Used in footer columns and the "Contact Us" link.</div>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div>
+            <label class="q-label" for="contact-email">Business Email <span class="req">✦</span></label>
+            <input type="email" id="contact-email" class="q-input" placeholder="e.g. hello@yourgym.com">
+            <div class="error-msg" id="err-contact-email">Please enter a valid email.</div>
+          </div>
+          <div>
+            <label class="q-label" for="contact-phone">Phone Number</label>
+            <input type="tel" id="contact-phone" class="q-input" placeholder="e.g. (512) 555-0110">
+          </div>
+          <div>
+            <label class="q-label" for="contact-website">Website URL</label>
+            <input type="url" id="contact-website" class="q-input" placeholder="e.g. https://yourgym.com">
+          </div>
+          <div>
+            <label class="q-label" for="contact-address">Street Address</label>
+            <input type="text" id="contact-address" class="q-input" placeholder="e.g. 123 Main St, Austin TX 78701">
+          </div>
+        </div>
+      </div>
+
+      <!-- Social media -->
+      <div class="q-card">
+        <div class="card-title">Social Media Profiles</div>
+        <div class="card-sub">Linked from footer icons. Leave blank to hide that icon.</div>
+        <div class="grid md:grid-cols-3 gap-5">
+          <div>
+            <label class="q-label" for="social-instagram">Instagram URL</label>
+            <input type="url" id="social-instagram" class="q-input" placeholder="https://instagram.com/…">
+          </div>
+          <div>
+            <label class="q-label" for="social-x">X / Twitter URL</label>
+            <input type="url" id="social-x" class="q-input" placeholder="https://x.com/…">
+          </div>
+          <div>
+            <label class="q-label" for="social-facebook">Facebook URL</label>
+            <input type="url" id="social-facebook" class="q-input" placeholder="https://facebook.com/…">
+          </div>
+        </div>
+      </div>
+
+      <!-- Newsletter -->
+      <div class="q-card">
+        <div class="card-title">Newsletter Section</div>
+        <div class="card-sub">The full-width dark band above the footer links.</div>
+        <div class="grid md:grid-cols-2 gap-5">
+          <div>
+            <label class="q-label" for="newsletter-headline">Newsletter Headline</label>
+            <input type="text" id="newsletter-headline" class="q-input" placeholder="e.g. Join the Inner Circle." maxlength="50">
+          </div>
+          <div>
+            <label class="q-label" for="newsletter-sub">Newsletter Sub-copy</label>
+            <input type="text" id="newsletter-sub" class="q-input" placeholder="e.g. Tips, offers, and insights — monthly." maxlength="100">
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer blurb -->
+      <div class="q-card">
+        <div class="card-title">Footer Brand Blurb</div>
+        <div class="card-sub">Short sentence beneath the wordmark in the footer columns.</div>
+        <div>
+          <label class="q-label" for="footer-blurb">Brand Blurb</label>
+          <textarea id="footer-blurb" class="q-textarea" style="min-height:70px;" placeholder="e.g. Premium fitness coaching designed to transform how you move, perform, and feel — permanently." maxlength="160"></textarea>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="flex justify-between mt-8">
+        <button class="btn-outline" onclick="goPrev(6)">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M11.5 7h-9M6 3.5L2.5 7 6 10.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Back
+        </button>
+        <button class="btn-gold" onclick="submitQuestionnaire()">
+          Generate Export
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 2v8M3.5 6.5L7 10l3.5-3.5M2 12h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ============================================================
+         STEP 7 — EXPORT / DONE
+    ============================================================ -->
+    <div id="step-7" class="step-panel" style="opacity:0;">
+
+      <div class="text-center mb-10">
+        <div class="check-circle">
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+            <circle cx="16" cy="16" r="15" stroke="#C8A96E" stroke-width="1.5"/>
+            <path d="M10 16.5L14.5 21L22 11" stroke="#C8A96E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h2 class="display text-4xl text-ink mb-3">Questionnaire Complete.</h2>
+        <p class="text-stone font-light max-w-lg mx-auto">
+          Your structured data export is ready below. Copy the JSON and send it to your
+          developer — every field maps directly to a section in <code class="text-ink bg-ivory px-1.5 py-0.5 rounded-sm text-sm">index.html</code>.
+        </p>
+      </div>
+
+      <!-- Summary card -->
+      <div class="q-card mb-6" id="export-summary">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Export panel -->
+      <div class="mb-4 flex items-center justify-between">
+        <span class="section-label">JSON Export</span>
+        <div class="flex items-center gap-4">
+          <span id="copy-feedback">Copied to clipboard ✓</span>
+          <button class="btn-outline" onclick="copyExport()" style="padding:0.625rem 1.25rem;">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <rect x="5" y="5" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M9 5V2a1 1 0 00-1-1H2a1 1 0 00-1 1v6a1 1 0 001 1h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+            </svg>
+            Copy JSON
+          </button>
+          <button class="btn-primary" onclick="downloadExport()" style="padding:0.625rem 1.25rem;">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 2v8M3.5 6.5L7 10l3.5-3.5M2 12h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Download .json
+          </button>
+        </div>
+      </div>
+      <pre id="export-panel"></pre>
+
+      <!-- Start over -->
+      <div class="text-center mt-10">
+        <button class="btn-outline" onclick="startOver()">Start New Questionnaire</button>
+      </div>
+    </div>
+
+  </main>
+
+
+  <!-- ============================================================
+       JAVASCRIPT
+  ============================================================ -->
+  <script>
+    /**
+     * ─────────────────────────────────────────────────────────────
+     *  Apex Form Questionnaire — main.js
+     *  Sections:
+     *    1. Step configuration & state
+     *    2. Page load entrance animation
+     *    3. Step navigation (goNext / goPrev / showStep)
+     *    4. Validation rules
+     *    5. Export / data collection
+     *    6. Utility helpers
+     * ─────────────────────────────────────────────────────────────
+     */
+
+    // ── 1. Step configuration ─────────────────────────────────────
+
+    const STEPS = [
+      { id: 1, label: 'Brand',        shortLabel: 'Brand' },
+      { id: 2, label: 'Hero',         shortLabel: 'Hero' },
+      { id: 3, label: 'Programs',     shortLabel: 'Programs' },
+      { id: 4, label: 'Testimonials', shortLabel: 'Reviews' },
+      { id: 5, label: 'Pricing',      shortLabel: 'Pricing' },
+      { id: 6, label: 'Footer',       shortLabel: 'Footer' },
+    ];
+
+    let currentStep = 1;
+    let exportData   = null;
+
+    // ── 2. Validation rules per step ─────────────────────────────
+
+    /**
+     * Returns an array of { id, errorId } objects for each required
+     * field on the given step. Returns [] if all pass.
+     */
+    function getValidationErrors(step) {
+      const required = {
+        1: [
+          { id: 'biz-name',    errorId: 'err-biz-name' },
+          { id: 'biz-descriptor', errorId: null },
+          { id: 'biz-year',    errorId: null },
+        ],
+        2: [
+          { id: 'hero-line1', errorId: 'err-hero-line1' },
+          { id: 'hero-line2', errorId: 'err-hero-line2' },
+          { id: 'hero-line3', errorId: 'err-hero-line3' },
+          { id: 'hero-desc',  errorId: 'err-hero-desc' },
+          { id: 'hero-cta-primary', errorId: 'err-hero-cta-primary' },
+          { id: 'stat1-value', errorId: 'err-stat1-value' },
+          { id: 'stat1-label', errorId: 'err-stat1-label' },
+          { id: 'stat2-value', errorId: 'err-stat2-value' },
+          { id: 'stat2-label', errorId: 'err-stat2-label' },
+          { id: 'stat3-value', errorId: 'err-stat3-value' },
+          { id: 'stat3-label', errorId: 'err-stat3-label' },
+        ],
+        3: [
+          { id: 'p1-name', errorId: 'err-p1-name' },
+          { id: 'p1-desc', errorId: 'err-p1-desc' },
+          { id: 'p1-b1',   errorId: null },
+          { id: 'p1-b2',   errorId: null },
+          { id: 'p1-b3',   errorId: null },
+          { id: 'p2-name', errorId: 'err-p2-name' },
+          { id: 'p2-desc', errorId: 'err-p2-desc' },
+          { id: 'p2-b1',   errorId: null },
+          { id: 'p2-b2',   errorId: null },
+          { id: 'p2-b3',   errorId: null },
+          { id: 'p3-name', errorId: 'err-p3-name' },
+          { id: 'p3-desc', errorId: 'err-p3-desc' },
+          { id: 'p3-b1',   errorId: null },
+          { id: 'p3-b2',   errorId: null },
+          { id: 'p3-b3',   errorId: null },
+        ],
+        4: [
+          { id: 'rating-score', errorId: 'err-rating-score' },
+          { id: 'rating-count', errorId: 'err-rating-count' },
+          { id: 't1-quote', errorId: 'err-t1-quote' },
+          { id: 't1-name',  errorId: 'err-t1-name' },
+          { id: 't2-quote', errorId: 'err-t2-quote' },
+          { id: 't2-name',  errorId: 'err-t2-name' },
+          { id: 't3-quote', errorId: 'err-t3-quote' },
+          { id: 't3-name',  errorId: 'err-t3-name' },
+        ],
+        5: [
+          { id: 'tier1-name',    errorId: 'err-tier1-name' },
+          { id: 'tier1-monthly', errorId: 'err-tier1-monthly' },
+          { id: 'tier1-annual',  errorId: 'err-tier1-annual' },
+          { id: 'tier2-name',    errorId: 'err-tier2-name' },
+          { id: 'tier2-monthly', errorId: 'err-tier2-monthly' },
+          { id: 'tier2-annual',  errorId: 'err-tier2-annual' },
+          { id: 'tier3-name',    errorId: 'err-tier3-name' },
+          { id: 'tier3-monthly', errorId: 'err-tier3-monthly' },
+          { id: 'tier3-annual',  errorId: 'err-tier3-annual' },
+        ],
+        6: [
+          { id: 'contact-email', errorId: 'err-contact-email' },
+        ],
+      };
+
+      const fields = required[step] || [];
+      const failed = [];
+
+      fields.forEach(({ id, errorId }) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const val = el.value.trim();
+        if (!val) {
+          el.classList.add('field-error');
+          if (errorId) {
+            const errEl = document.getElementById(errorId);
+            if (errEl) errEl.classList.add('visible');
+          }
+          failed.push(id);
+        } else {
+          el.classList.remove('field-error');
+          if (errorId) {
+            const errEl = document.getElementById(errorId);
+            if (errEl) errEl.classList.remove('visible');
+          }
+        }
+      });
+
+      return failed;
+    }
+
+    /** Clear all validation errors on a step */
+    function clearErrors(step) {
+      const panel = document.getElementById(`step-${step}`);
+      panel.querySelectorAll('.field-error').forEach(el => el.classList.remove('field-error'));
+      panel.querySelectorAll('.error-msg.visible').forEach(el => el.classList.remove('visible'));
+    }
+
+    // ── 3. Step navigation ────────────────────────────────────────
+
+    function buildStepNav() {
+      const nav = document.getElementById('step-nav');
+      nav.innerHTML = '';
+
+      STEPS.forEach((step, idx) => {
+        // Connector before each step (except the first)
+        if (idx > 0) {
+          const connector = document.createElement('div');
+          connector.className = 'step-connector';
+          connector.id = `connector-${idx}`;
+          nav.appendChild(connector);
+        }
+
+        // Dot
+        const dot = document.createElement('button');
+        dot.id = `dot-${step.id}`;
+        dot.className = `step-dot ${step.id === 1 ? 'active' : ''}`;
+        dot.textContent = step.id;
+        dot.title = step.label;
+        dot.setAttribute('aria-label', `Go to step ${step.id}: ${step.label}`);
+        dot.addEventListener('click', () => {
+          // Only allow going back (not forward-jumping past current)
+          if (step.id < currentStep) {
+            showStep(step.id, 'back');
+          }
+        });
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'flex flex-col items-center gap-1.5';
+        wrapper.appendChild(dot);
+
+        const lbl = document.createElement('span');
+        lbl.className = 'section-label hidden sm:block';
+        lbl.style.fontSize = '0.6rem';
+        lbl.textContent = step.shortLabel;
+        wrapper.appendChild(lbl);
+
+        nav.appendChild(wrapper);
+      });
+    }
+
+    function updateStepNav(newStep) {
+      STEPS.forEach(step => {
+        const dot = document.getElementById(`dot-${step.id}`);
+        if (!dot) return;
+        dot.className = 'step-dot';
+        if (step.id < newStep)  dot.classList.add('done');
+        if (step.id === newStep) dot.classList.add('active');
+      });
+
+      // Update connectors
+      STEPS.forEach((step, idx) => {
+        if (idx === 0) return;
+        const connector = document.getElementById(`connector-${idx}`);
+        if (!connector) return;
+        connector.style.background = (step.id <= newStep) ? 'var(--gold)' : 'var(--border)';
+      });
+    }
+
+    function updateProgressBar(step) {
+      const pct = (step / 7) * 100;
+      document.getElementById('progress-bar').style.width = `${pct}%`;
+    }
+
+    /**
+     * Animate out the current step panel and animate in the target step panel.
+     * @param {number} targetStep - step number to show
+     * @param {string} direction - 'forward' | 'back'
+     */
+    function showStep(targetStep, direction = 'forward') {
+      const fromPanel = document.getElementById(`step-${currentStep}`);
+      const toPanel   = document.getElementById(`step-${targetStep}`);
+
+      const xOut = direction === 'forward' ? -30 : 30;
+      const xIn  = direction === 'forward' ?  30 : -30;
+
+      gsap.to(fromPanel, {
+        opacity: 0, x: xOut, duration: 0.25, ease: 'power2.in',
+        onComplete() {
+          fromPanel.classList.remove('active');
+          fromPanel.style.opacity = 0;
+          fromPanel.style.transform = '';
+
+          toPanel.classList.add('active');
+          gsap.fromTo(toPanel,
+            { opacity: 0, x: xIn },
+            { opacity: 1, x: 0, duration: 0.35, ease: 'power3.out' }
+          );
+
+          currentStep = targetStep;
+          updateStepNav(targetStep);
+          updateProgressBar(targetStep);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+      });
+    }
+
+    function goNext(fromStep) {
+      clearErrors(fromStep);
+      const errors = getValidationErrors(fromStep);
+
+      if (errors.length) {
+        // Shake the first errored panel
+        const panel = document.getElementById(`step-${fromStep}`);
+        panel.classList.add('shake');
+        setTimeout(() => panel.classList.remove('shake'), 400);
+
+        // Scroll to first error
+        const firstErr = document.getElementById(errors[0]);
+        if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+
+      showStep(fromStep + 1, 'forward');
+    }
+
+    function goPrev(fromStep) {
+      showStep(fromStep - 1, 'back');
+    }
+
+    // ── 4. Color picker sync ──────────────────────────────────────
+
+    document.getElementById('biz-accent-picker').addEventListener('input', function () {
+      document.getElementById('biz-accent').value = this.value.toUpperCase();
+    });
+    document.getElementById('biz-accent').addEventListener('input', function () {
+      const val = this.value.trim();
+      if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+        document.getElementById('biz-accent-picker').value = val;
+      }
+    });
+
+    // Clear field-error on input
+    document.querySelectorAll('.q-input, .q-textarea').forEach(el => {
+      el.addEventListener('input', function () {
+        this.classList.remove('field-error');
+        const errId = `err-${this.id}`;
+        const errEl = document.getElementById(errId);
+        if (errEl) errEl.classList.remove('visible');
+      });
+    });
+
+    // ── 5. Data collection & export ───────────────────────────────
+
+    function val(id) {
+      const el = document.getElementById(id);
+      return el ? el.value.trim() : '';
+    }
+
+    function numVal(id) {
+      const el = document.getElementById(id);
+      return el ? parseFloat(el.value) || 0 : 0;
+    }
+
+    function collectData() {
+      return {
+        _meta: {
+          generated: new Date().toISOString(),
+          source:    'Apex Form Website Questionnaire v1.0',
+          maps_to:   'index.html',
+        },
+        brand: {
+          name:        val('biz-name'),
+          descriptor:  val('biz-descriptor'),
+          year_est:    val('biz-year'),
+          location:    val('biz-location'),
+          accent_color: val('biz-accent') || '#C8A96E',
+          wordmark_initial: val('biz-initial') || val('biz-name').charAt(0).toUpperCase(),
+        },
+        hero: {
+          headline: {
+            line1:      val('hero-line1'),
+            line2_italic: val('hero-line2'),
+            line3_gold: val('hero-line3'),
+          },
+          description: val('hero-desc'),
+          cta_primary:   val('hero-cta-primary'),
+          cta_secondary: val('hero-cta-secondary'),
+          stats: [
+            { value: val('stat1-value'), label: val('stat1-label') },
+            { value: val('stat2-value'), label: val('stat2-label') },
+            { value: val('stat3-value'), label: val('stat3-label') },
+          ],
+        },
+        programs: [
+          {
+            number:      '01',
+            name:        val('p1-name'),
+            description: val('p1-desc'),
+            image_file:  val('p1-img'),
+            bullets:     [val('p1-b1'), val('p1-b2'), val('p1-b3')].filter(Boolean),
+            style:       'light',
+          },
+          {
+            number:      '02',
+            name:        val('p2-name'),
+            description: val('p2-desc'),
+            image_file:  val('p2-img'),
+            bullets:     [val('p2-b1'), val('p2-b2'), val('p2-b3')].filter(Boolean),
+            style:       'dark',
+            badge:       'Most Popular',
+          },
+          {
+            number:      '03',
+            name:        val('p3-name'),
+            description: val('p3-desc'),
+            image_file:  val('p3-img'),
+            bullets:     [val('p3-b1'), val('p3-b2'), val('p3-b3')].filter(Boolean),
+            style:       'light',
+          },
+        ],
+        testimonials: {
+          overall_rating: numVal('rating-score'),
+          review_count:   numVal('rating-count'),
+          items: [
+            {
+              quote:       val('t1-quote'),
+              name:        val('t1-name'),
+              member_since: val('t1-since'),
+              result:      val('t1-result'),
+              style:       'light',
+            },
+            {
+              quote:       val('t2-quote'),
+              name:        val('t2-name'),
+              member_since: val('t2-since'),
+              result:      val('t2-result'),
+              style:       'featured',
+            },
+            {
+              quote:       val('t3-quote'),
+              name:        val('t3-name'),
+              member_since: val('t3-since'),
+              result:      val('t3-result'),
+              style:       'light',
+            },
+          ],
+        },
+        pricing: {
+          section_tagline: val('price-tagline'),
+          annual_discount_pct: numVal('annual-discount'),
+          tiers: [
+            {
+              name:    val('tier1-name'),
+              style:   'light',
+              monthly: numVal('tier1-monthly'),
+              annual:  numVal('tier1-annual'),
+              features_included: [val('t1f1'), val('t1f2'), val('t1f3')].filter(Boolean),
+              features_excluded: [val('t1f4'), val('t1f5')].filter(Boolean),
+              cta:     'Get Started',
+            },
+            {
+              name:    val('tier2-name'),
+              style:   'dark',
+              badge:   'Best Value',
+              monthly: numVal('tier2-monthly'),
+              annual:  numVal('tier2-annual'),
+              features_included: [val('t2f1'), val('t2f2'), val('t2f3'), val('t2f4'), val('t2f5')].filter(Boolean),
+              features_excluded: [],
+              cta:     `Join ${val('tier2-name') || 'Pro'}`,
+            },
+            {
+              name:    val('tier3-name'),
+              style:   'light',
+              monthly: numVal('tier3-monthly'),
+              annual:  numVal('tier3-annual'),
+              features_included: [val('t3f1'), val('t3f2'), val('t3f3'), val('t3f4'), val('t3f5')].filter(Boolean),
+              features_excluded: [],
+              cta:     `Go ${val('tier3-name') || 'Elite'}`,
+            },
+          ],
+        },
+        footer: {
+          newsletter_headline: val('newsletter-headline'),
+          newsletter_sub:      val('newsletter-sub'),
+          brand_blurb:         val('footer-blurb'),
+          contact: {
+            email:   val('contact-email'),
+            phone:   val('contact-phone'),
+            website: val('contact-website'),
+            address: val('contact-address'),
+          },
+          social: {
+            instagram: val('social-instagram'),
+            x:         val('social-x'),
+            facebook:  val('social-facebook'),
+          },
+        },
+      };
+    }
+
+    function buildExportSummary(data) {
+      const el = document.getElementById('export-summary');
+      el.innerHTML = `
+        <div class="grid sm:grid-cols-3 gap-6">
+          <div>
+            <div class="section-label mb-1">Business</div>
+            <div class="font-display text-xl text-ink">${data.brand.name}</div>
+            <div class="text-stone text-sm">${data.brand.descriptor}</div>
+          </div>
+          <div>
+            <div class="section-label mb-1">Programs</div>
+            <div class="text-sm text-ink font-medium">
+              ${data.programs.map(p => p.name).filter(Boolean).join(' · ')}
+            </div>
+          </div>
+          <div>
+            <div class="section-label mb-1">Pricing Tiers</div>
+            <div class="text-sm text-ink font-medium">
+              ${data.pricing.tiers.map(t => `${t.name} ($${t.monthly}/mo)`).filter(t => t.includes('$')).join(' · ')}
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function submitQuestionnaire() {
+      // Validate step 6
+      clearErrors(6);
+      const errors = getValidationErrors(6);
+      if (errors.length) {
+        const panel = document.getElementById('step-6');
+        panel.classList.add('shake');
+        setTimeout(() => panel.classList.remove('shake'), 400);
+        return;
+      }
+
+      exportData = collectData();
+      const json = JSON.stringify(exportData, null, 2);
+
+      // Populate export panel
+      const exportPanelEl = document.getElementById('export-panel');
+      exportPanelEl.textContent = json;
+      exportPanelEl.style.display = 'block';
+
+      buildExportSummary(exportData);
+
+      showStep(7, 'forward');
+    }
+
+    // ── 6. Copy & download ────────────────────────────────────────
+
+    function copyExport() {
+      if (!exportData) return;
+      const json = JSON.stringify(exportData, null, 2);
+      navigator.clipboard.writeText(json).then(() => {
+        const fb = document.getElementById('copy-feedback');
+        fb.style.opacity = 1;
+        setTimeout(() => fb.style.opacity = 0, 2500);
+      }).catch(() => {
+        // Fallback for older browsers
+        const ta = document.createElement('textarea');
+        ta.value = json;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        const fb = document.getElementById('copy-feedback');
+        fb.style.opacity = 1;
+        setTimeout(() => fb.style.opacity = 0, 2500);
+      });
+    }
+
+    function downloadExport() {
+      if (!exportData) return;
+      const json = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      const bizName = (exportData.brand.name || 'apex-form').toLowerCase().replace(/\s+/g, '-');
+      a.href     = url;
+      a.download = `${bizName}-website-data.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function startOver() {
+      // Reset all inputs
+      document.querySelectorAll('.q-input, .q-textarea').forEach(el => { el.value = ''; });
+      document.getElementById('biz-accent').value = '#C8A96E';
+      document.getElementById('biz-accent-picker').value = '#C8A96E';
+      document.getElementById('export-panel').style.display = 'none';
+      exportData = null;
+
+      // Hide step 7, show step 1
+      const step7 = document.getElementById('step-7');
+      step7.classList.remove('active');
+      gsap.set(step7, { opacity: 0 });
+
+      const step1 = document.getElementById('step-1');
+      step1.classList.add('active');
+      gsap.fromTo(step1, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.4, ease: 'power3.out' });
+
+      currentStep = 1;
+      updateStepNav(1);
+      updateProgressBar(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── 7. Page load entrance animation ──────────────────────────
+
+    window.addEventListener('DOMContentLoaded', () => {
+      buildStepNav();
+      updateStepNav(1);
+      updateProgressBar(1);
+
+      const tl = gsap.timeline({ delay: 0.1 });
+      tl.to('#page-header', { opacity: 1, y: 0, duration: 0.7,  ease: 'power3.out' })
+        .to('#step-nav',    { opacity: 1, duration: 0.5, ease: 'power3.out' }, '-=0.4')
+        .to('#step-1',      { opacity: 1, duration: 0.55, ease: 'power3.out' }, '-=0.3');
+    });
+
+  </script>
+</body>
+</html>
